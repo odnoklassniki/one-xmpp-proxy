@@ -1,5 +1,7 @@
 package one.xmpp.server.network;
 
+import one.ejb.Nullable;
+
 /**
  * Default no-op implementation of {@link NetworkOperationsLogger}
  * 
@@ -9,6 +11,11 @@ public class DefaultNetworkOperationsLogger implements NetworkOperationsLogger {
 
     @Override
     public void onReadPollerSignal(long signal) {
+        // no op
+    }
+
+    @Override
+    public void onSocketClose(@Nullable String reason) {
         // no op
     }
 

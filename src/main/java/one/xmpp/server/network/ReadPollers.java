@@ -4,9 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Component;
 
-import one.xmpp.server.XmppProxyConfiguration;
-
 import one.ejb.NotNullByDefault;
+import one.xmpp.server.XmppProxyConfiguration;
 import one.xmpp.server.network.AbstractServer.AbstractSocket;
 
 @Component

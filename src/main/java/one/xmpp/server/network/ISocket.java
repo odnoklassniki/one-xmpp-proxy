@@ -27,7 +27,7 @@ public interface ISocket {
 
     void queue(SocketOperation operation);
 
-    void queueClose(boolean next);
+    void queueClose(String closeReasonCode, boolean next);
 
     void queueWrite(ByteBuffer buffer);
 

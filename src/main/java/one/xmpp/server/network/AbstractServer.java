@@ -9,10 +9,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.tomcat.jni.Address;
@@ -275,7 +277,7 @@ public abstract class AbstractServer {
         this.stop = true;
 
         for (AbstractSocket iSocket : sockets.values()) {
-            iSocket.queueClose(true);
+            iSocket.queueClose("server-stop", true);
         }
     }
 
@@ -286,6 +288,8 @@ public abstract class AbstractServer {
         private final Long clientSockId;
 
         private volatile boolean closed = false;
+
+        private AtomicReference<String> closingReasonCode = new AtomicReference<String>(StringUtils.EMPTY);
 
         private final long connectionTime = System.currentTimeMillis();
 
@@ -415,6 +419,8 @@ public abstract class AbstractServer {
                 log.error("Unable to cleanup operation queue for " + this + ": " + exc, exc);
             }
 
+            opLogger.onSocketClose(closingReasonCode.get());
+
             if (log.isInfoEnabled()) {
                 log.info("Closed and destroyed " + this);
             }
@@ -504,7 +510,7 @@ public abstract class AbstractServer {
             if (read == 0) {
                 opLogger.onSocketReadZeroBytes();
                 log.info("Socket::read for " + this + " returned 0. Closing it");
-                this.queueClose(true);
+                this.queueClose("read-zero", true);
                 return;
             }
 
@@ -518,7 +524,7 @@ public abstract class AbstractServer {
 
                 log.warn("Socket::read returned " + read + " for " + this + " (" + Error.strerror(-read)
                         + "). Closing it.");
-                this.queueClose(true);
+                this.queueClose("read-error" + read, true);
                 return;
             }
 
@@ -576,7 +582,7 @@ public abstract class AbstractServer {
                 opLogger.onSocketWriteError(-sent);
 
                 log.error("Unable to sent data to " + this + ", error #" + (-sent) + ": " + Error.strerror(-sent));
-                queueClose(true);
+                queueClose("sent-error" + sent, true);
                 return sent;
             }
 
@@ -629,7 +635,8 @@ public abstract class AbstractServer {
         }
 
         @Override
-        public void queueClose(boolean next) {
+        public void queueClose(String reasonCode, boolean next) {
+            setClosingReasonCode(reasonCode);
             if (closed) {
                 return;
             }
@@ -675,6 +682,11 @@ public abstract class AbstractServer {
             }
 
             queue(new SocketWriteOpeation(data));
+        }
+
+        public void setClosingReasonCode(String closingReasonCode) {
+            // we need only first reason
+            this.closingReasonCode.compareAndSet(StringUtils.EMPTY, closingReasonCode);
         }
 
         @Override
@@ -778,7 +790,7 @@ public abstract class AbstractServer {
 
         @Override
         protected void run(AbstractSocket socket) throws Exception {
-            socket.queueClose(true);
+            socket.queueClose("on-hangup", true);
         }
 
         @Override
@@ -795,7 +807,7 @@ public abstract class AbstractServer {
 
         @Override
         protected void run(AbstractSocket socket) throws Exception {
-            socket.queueClose(true);
+            socket.queueClose("on-maintain", true);
         }
 
         @Override
@@ -812,7 +824,7 @@ public abstract class AbstractServer {
 
         @Override
         protected void run(AbstractSocket socket) throws Exception {
-            socket.queueClose(true);
+            socket.queueClose("on-pending-error", true);
         }
 
         @Override
