@@ -26,6 +26,9 @@ import one.xmpp.AbstractSpringTest;
 
 public class EchoServerTest extends AbstractSpringTest {
 
+    private static final int TESTS_COUNT_MULTITHREAD = 500;
+    private static final int TESTS_COUNT_SINGLETHREAD = 100;
+
     private static SocketFactory socketFactory;
 
     @BeforeClass
@@ -141,7 +144,7 @@ public class EchoServerTest extends AbstractSpringTest {
 
     @Test
     public void testMultiple() throws Exception {
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < TESTS_COUNT_SINGLETHREAD; i++) {
             test();
         }
     }
@@ -175,9 +178,8 @@ public class EchoServerTest extends AbstractSpringTest {
             }
         }.start();
 
-        final int count = 10000;
-        List<Future<?>> futures = new ArrayList<Future<?>>(count);
-        for (int i = 0; i < count; i++) {
+        List<Future<?>> futures = new ArrayList<Future<?>>(TESTS_COUNT_MULTITHREAD);
+        for (int i = 0; i < TESTS_COUNT_MULTITHREAD; i++) {
             futures.add(executorService.submit(new Callable<Object>() {
                 @Override
                 public Object call() throws Exception {

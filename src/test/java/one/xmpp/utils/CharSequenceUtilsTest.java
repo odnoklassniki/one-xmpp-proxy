@@ -56,8 +56,10 @@ public class CharSequenceUtilsTest {
 
         CharsetDecoder characterDecoder = Charset.forName("UTF-8").newDecoder();
 
-        byte[] b2 = "\u00a2".getBytes();
-        Assert.assertTrue(Arrays.equals(new byte[] { (byte) 0x0c2, (byte) 0x0a2 }, b2));
+        byte[] b2 = "\u00a2".getBytes("UTF-8");
+        Assert.assertNotNull(b2);
+        Assert.assertTrue("Array " + Arrays.toString(b2) + " not represent \\u00a2 as expected",
+                Arrays.equals(new byte[] { (byte) 0x0c2, (byte) 0x0a2 }, b2));
 
         // decode whole codepoint at once
         CharBuffer charBuffer = characterDecoder.decode(ByteBuffer.wrap(new byte[] { b2[0], b2[1] }));
